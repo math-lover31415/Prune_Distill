@@ -219,6 +219,6 @@ __marimo__/
 
 
 data/
-trained_models/
+results/
 # for latex
 build/
