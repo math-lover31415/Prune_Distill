@@ -49,12 +49,13 @@ if __name__=='__main__':
     tokenized_train = train_dataset.map(lambda x: tokenizer(x["text"], truncation=True), batched = True)
     tokenized_val = val_dataset.map(lambda x: tokenizer(x["text"], truncation=True), batched = True)
 
-    student = AutoModelForSequenceClassification.from_pretrained(STUDENT_MODEL_NAME, dtype=torch.float32)
+    num_labels = train_dataset.features["label"].num_classes
+    student = AutoModelForSequenceClassification.from_pretrained(STUDENT_MODEL_NAME, num_labels=num_labels,dtype=torch.float32)
     trainer = CustomTrainer(
         model=student,
         args=TRAINING_ARGS,
         train_dataset=tokenized_train,
         eval_dataset=tokenized_val,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
     )
     trainer.train()
