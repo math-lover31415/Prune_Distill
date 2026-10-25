@@ -67,6 +67,9 @@ def train_model(strategy=None, teacher=None):
         processing_class=tokenizer,
     )
     trainer.train()
+    final_model_path = os.path.join(OUTPUT_DIR, strategy, "final")
+    trainer.save_model(final_model_path)
+    tokenizer.save_pretrained(final_model_path)
 
 
 if __name__=='__main__':
