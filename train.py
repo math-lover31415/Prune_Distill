@@ -1,9 +1,15 @@
 # %%
 import torch
+import sys, os
+from pruning import pruning_functions
 from constants import *
 from torch.nn import functional as F
 from datasets import load_dataset
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
+
+def get_training_args(**overrides) -> TrainingArguments:
+    arguments = {**TRAINING_ARGUMENTS, **overrides}
+    return TrainingArguments(**arguments)
 
 # %%
 class CustomTrainer(Trainer):
@@ -13,6 +19,7 @@ class CustomTrainer(Trainer):
             teacher = AutoModelForSequenceClassification.from_pretrained(TEACHER_MODEL_NAME, dtype=torch.float32)
         for param in teacher.parameters():
             param.requires_grad = False
+        teacher.eval()
         self.teacher = teacher.to(self.args.device)
         self.temperature = temperature
         self.kd_factor = kd_factor
@@ -29,7 +36,7 @@ class CustomTrainer(Trainer):
         teacher_probs = F.softmax(teacher_logits/self.temperature, dim=-1)
 
         # KD loss
-        kd_loss = F.kl_div(student_probs, teacher_probs, log_target=True)*self.temperature**2
+        kd_loss = F.kl_div(student_probs, teacher_probs, log_target=False, reduction="batchmean")*self.temperature**2
 
         # Supervised loss
         supervised_loss = F.cross_entropy(logits, inputs.get("labels"))
@@ -39,8 +46,7 @@ class CustomTrainer(Trainer):
 
         return (loss, outputs) if return_outputs else loss
 
-# %%
-if __name__=='__main__':
+def train_model(strategy=None, teacher=None):
     tokenizer = AutoTokenizer.from_pretrained(STUDENT_MODEL_NAME)
     
     train_dataset = load_dataset("dair-ai/emotion", split="train")
@@ -51,11 +57,21 @@ if __name__=='__main__':
 
     num_labels = train_dataset.features["label"].num_classes
     student = AutoModelForSequenceClassification.from_pretrained(STUDENT_MODEL_NAME, num_labels=num_labels,dtype=torch.float32)
+    training_args = get_training_args(output_dir= os.path.join(OUTPUT_DIR, strategy))
     trainer = CustomTrainer(
+        teacher=teacher,
         model=student,
-        args=TRAINING_ARGS,
+        args=training_args,
         train_dataset=tokenized_train,
         eval_dataset=tokenized_val,
         processing_class=tokenizer,
     )
     trainer.train()
+
+
+if __name__=='__main__':
+    for name in pruning_functions:
+        func = pruning_functions[name]
+        teacher = AutoModelForSequenceClassification.from_pretrained(TEACHER_MODEL_NAME, dtype=torch.float32)
+        pruned_teacher = func(teacher, PRUNING_SPARSITY)
+        train_model(name, pruned_teacher)

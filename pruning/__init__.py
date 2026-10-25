@@ -1,4 +1,4 @@
-from magnitude_prune import magnitude_prune_bert
+from .magnitude_prune import magnitude_prune_bert
 
 def local_magnitude(model, sparsity):
     return magnitude_prune_bert(model, sparsity, "local")
