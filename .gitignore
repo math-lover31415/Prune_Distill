@@ -222,3 +222,4 @@ data/
 results/
 # for latex
 build/
+.DS_Store
