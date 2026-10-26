@@ -17,5 +17,5 @@ PRUNING_SPARSITY = 0.2
 KD_FACTOR = 0.1
 TEACHER_TEMPERATURE = 1
 
-STUDENT_MODEL_NAME = "prajjwal1/bert-tiny"
+STUDENT_MODEL_NAME = "google/bert_uncased_L-4_H-256_A-4"
 TEACHER_MODEL_NAME = "bhadresh-savani/bert-base-uncased-emotion"
