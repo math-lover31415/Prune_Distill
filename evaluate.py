@@ -177,10 +177,10 @@ if __name__ == "__main__":
 
     evaluate_model(teacher, tokenizer, test_dataset, "Unpruned Teacher")
 
-    for name in pruning_functions:
-        func = pruning_functions[name]
-        pruned_teacher = func(teacher, PRUNING_SPARSITY)
-        evaluate_model(pruned_teacher, tokenizer, test_dataset, f"Pruned Teacher ({name})")
+    for name, func in {**pruning_functions, "Without KD": None}.items():
+        if func:
+            pruned_teacher = func(teacher, PRUNING_SPARSITY)
+            evaluate_model(pruned_teacher, tokenizer, test_dataset, f"Pruned Teacher ({name})")
 
         student_path = os.path.join(OUTPUT_DIR, name, "final")
         if os.path.exists(student_path):

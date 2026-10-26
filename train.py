@@ -15,18 +15,23 @@ def get_training_args(**overrides) -> TrainingArguments:
 class CustomTrainer(Trainer):
     def __init__(self, teacher=None, temperature=TEACHER_TEMPERATURE, kd_factor=KD_FACTOR, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if teacher is None:
-            teacher = AutoModelForSequenceClassification.from_pretrained(TEACHER_MODEL_NAME, dtype=torch.float32)
-        for param in teacher.parameters():
-            param.requires_grad = False
-        teacher.eval()
-        self.teacher = teacher.to(self.args.device)
+        if teacher:
+            for param in teacher.parameters():
+                param.requires_grad = False
+            teacher.eval()
+            teacher = teacher.to(self.args.device)
+        self.teacher = teacher
         self.temperature = temperature
         self.kd_factor = kd_factor
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         outputs = model(**inputs)
         logits = outputs.logits
+
+        # Supervised loss
+        supervised_loss = F.cross_entropy(logits, inputs.get("labels"))
+        if not self.teacher:
+            return (supervised_loss, outputs) if return_outputs else supervised_loss
 
         with torch.no_grad():
             teacher_outputs = self.teacher(**inputs)
@@ -38,8 +43,6 @@ class CustomTrainer(Trainer):
         # KD loss
         kd_loss = F.kl_div(student_probs, teacher_probs, log_target=False, reduction="batchmean")*self.temperature**2
 
-        # Supervised loss
-        supervised_loss = F.cross_entropy(logits, inputs.get("labels"))
 
         # Combined
         loss =  (1-self.kd_factor)*supervised_loss + self.kd_factor*kd_loss
@@ -73,8 +76,11 @@ def train_model(strategy=None, teacher=None):
 
 
 if __name__=='__main__':
+    teacher = AutoModelForSequenceClassification.from_pretrained(TEACHER_MODEL_NAME, dtype=torch.float32)
     for name in pruning_functions:
         func = pruning_functions[name]
-        teacher = AutoModelForSequenceClassification.from_pretrained(TEACHER_MODEL_NAME, dtype=torch.float32)
         pruned_teacher = func(teacher, PRUNING_SPARSITY)
         train_model(name, pruned_teacher)
+
+    # train student without kd
+    train_model("Without KD", None)
