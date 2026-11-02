@@ -6,6 +6,7 @@ from constants import *
 from torch.nn import functional as F
 from datasets import load_dataset
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
+import argparse
 
 def get_training_args(**overrides) -> TrainingArguments:
     arguments = {**TRAINING_ARGUMENTS, **overrides}
@@ -76,10 +77,19 @@ def train_model(strategy=None, teacher=None):
 
 
 if __name__=='__main__':
+
+    parser = argparse.ArgumentParser(description="taking command line arguments")
+    parser.add_argument(
+        "--sparsity", 
+        type=float, 
+        default=PRUNING_SPARSITY, 
+    )
+    args = parser.parse_args()
+    sparsity = args.sparsity
     teacher = AutoModelForSequenceClassification.from_pretrained(TEACHER_MODEL_NAME, dtype=torch.float32)
     for name in pruning_functions:
         func = pruning_functions[name]
-        pruned_teacher = func(teacher, PRUNING_SPARSITY)
+        pruned_teacher = func(teacher, sparsity)
         train_model(name, pruned_teacher)
 
     # train student without kd
