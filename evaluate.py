@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support, con
 from scipy.stats import kendalltau
 from scipy.spatial.distance import jensenshannon
 from tabulate import tabulate
-
+import csv
 from constants import *
 from pruning import pruning_functions
 from pruning.magnitude_prune import sparsity_report
