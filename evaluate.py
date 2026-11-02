@@ -124,6 +124,8 @@ def evaluate_attention(model, tokenizer, dataset, num_samples=200):
         faithfulness_comprehensiveness.append(orig_prob - comp_probs[0, pred_cls].item())
         faithfulness_sufficiency.append(orig_prob - suff_probs[0, pred_cls].item())
 
+    
+
     return {
         "attention_gradient_correlation": float(np.nanmean(attention_gradient_correlation)),
         "divergence_score": float(np.nanmean(divergence_score)),
@@ -165,6 +167,26 @@ def evaluate_model(model, tokenizer, dataset, name):
     attn_table = [[k, f"{v:.4f}"] for k, v in attn_res.items()]
     print("\nAttention Explainability Metrics:")
     print(tabulate(attn_table, headers=["Metric", "Score"], tablefmt="fancy_grid"))
+
+    csv_file = "evaluation_results.csv"
+    file_exists = os.path.exists(csv_file)
+    
+    row = {
+        "Model": name,
+        "Sparsity (%)": round(sparsity * 100, 2),
+        "Overall Accuracy (%)": round(cls_res["overall_acc"] * 100, 2),
+        "Macro F1": round(cls_res["macro_f1"], 4),
+        "Weighted F1": round(cls_res["weighted_f1"], 4),
+        "Macro Precision": round(cls_res["macro_p"], 4),
+        "Macro Recall": round(cls_res["macro_r"], 4),
+        **{f"Attn_{k}": round(v, 4) for k, v in attn_res.items()}
+    }
+
+    with open(csv_file, mode="a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(row.keys()))
+        if not file_exists:
+            writer.writeheader() 
+        writer.writerow(row)
 
     return {"sparsity": sparsity, **cls_res, **attn_res}
 
