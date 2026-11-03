@@ -1,5 +1,6 @@
 # %%
 import os
+import argparse
 import torch
 import numpy as np
 import torch.nn.functional as F
@@ -193,6 +194,15 @@ def evaluate_model(model, tokenizer, dataset, name):
 
 # %%
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="command line arguments for evaluate")
+    parser.add_argument(
+        "--sparsity",
+        type=float,
+        default=PRUNING_SPARSITY,
+        help="we need to remember to put in the exact same value as the one we use for train.py",
+    )
+    args = parser.parse_args()
+
     test_dataset = load_dataset("dair-ai/emotion", split="test")
     tokenizer = AutoTokenizer.from_pretrained(TEACHER_MODEL_NAME)
     teacher = AutoModelForSequenceClassification.from_pretrained(TEACHER_MODEL_NAME, dtype=torch.float32)
@@ -201,7 +211,7 @@ if __name__ == "__main__":
 
     for name, func in {**pruning_functions, "Without KD": None}.items():
         if func:
-            pruned_teacher = func(teacher, PRUNING_SPARSITY)
+            pruned_teacher = func(teacher, args.sparsity)
             evaluate_model(pruned_teacher, tokenizer, test_dataset, f"Pruned Teacher ({name})")
 
         student_path = os.path.join(OUTPUT_DIR, name, "final")
