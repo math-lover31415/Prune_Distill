@@ -169,7 +169,7 @@ def evaluate_model(model, tokenizer, dataset, name):
     print("\nAttention Explainability Metrics:")
     print(tabulate(attn_table, headers=["Metric", "Score"], tablefmt="fancy_grid"))
 
-    csv_file = "Prune_Distill/evaluation_results.csv"
+    csv_file = "evaluation_results.csv"
     file_exists = os.path.exists(csv_file)
     
     row = {
