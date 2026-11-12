@@ -8,7 +8,7 @@ from torch.return_types import mode
 def get_target_layers(model):
     # transformer encoder layers
     return [
-        (module, "weight")
+        (name, module)
         for name, module in model.named_modules()
         if isinstance(module, nn.Linear) and ".layer." in name
     ]
