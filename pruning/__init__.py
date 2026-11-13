@@ -13,5 +13,5 @@ def global_magnitude(model, sparsity):
 def svd_pruning(model, sparsity):
     return svd_prune_bert(model, sparsity)
 
-pruning_functions = {"identity": identity, "svd": svd_pruning}
-# pruning_functions = {"identity": identity, "local_mag": local_magnitude, "global_mag": global_magnitude, "svd": svd_pruning}
+# pruning_functions = {"svd": svd_pruning}
+pruning_functions = {"identity": identity, "local_mag": local_magnitude, "global_mag": global_magnitude, "svd": svd_pruning}
