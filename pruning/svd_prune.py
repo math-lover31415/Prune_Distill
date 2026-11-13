@@ -28,6 +28,8 @@ def svd_prune_bert(model, sparsity):
 
     if not 0.0 <= sparsity <= 1.0:
         raise ValueError("Must be a real number in [0,1]")
+
+    print(f"Pruning model with SVD at {sparsity*100:.2f}% sparsity")
     
     #not doing in place here, so changed it
     thinned_model = copy.deepcopy(model)
