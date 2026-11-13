@@ -1,5 +1,6 @@
 # %%
 import os
+import argparse
 import torch
 import numpy as np
 import torch.nn.functional as F
@@ -9,7 +10,7 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support, con
 from scipy.stats import kendalltau
 from scipy.spatial.distance import jensenshannon
 from tabulate import tabulate
-
+import csv
 from constants import *
 from pruning import pruning_functions
 from pruning.magnitude_prune import sparsity_report
@@ -124,6 +125,8 @@ def evaluate_attention(model, tokenizer, dataset, num_samples=200):
         faithfulness_comprehensiveness.append(orig_prob - comp_probs[0, pred_cls].item())
         faithfulness_sufficiency.append(orig_prob - suff_probs[0, pred_cls].item())
 
+    
+
     return {
         "attention_gradient_correlation": float(np.nanmean(attention_gradient_correlation)),
         "divergence_score": float(np.nanmean(divergence_score)),
@@ -166,11 +169,40 @@ def evaluate_model(model, tokenizer, dataset, name):
     print("\nAttention Explainability Metrics:")
     print(tabulate(attn_table, headers=["Metric", "Score"], tablefmt="fancy_grid"))
 
+    csv_file = "evaluation_results.csv"
+    file_exists = os.path.exists(csv_file)
+    
+    row = {
+        "Model": name,
+        "Sparsity (%)": round(sparsity * 100, 2),
+        "Overall Accuracy (%)": round(cls_res["overall_acc"] * 100, 2),
+        "Macro F1": round(cls_res["macro_f1"], 4),
+        "Weighted F1": round(cls_res["weighted_f1"], 4),
+        "Macro Precision": round(cls_res["macro_p"], 4),
+        "Macro Recall": round(cls_res["macro_r"], 4),
+        **{f"Attn_{k}": round(v, 4) for k, v in attn_res.items()}
+    }
+
+    with open(csv_file, mode="a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(row.keys()))
+        if not file_exists:
+            writer.writeheader() 
+        writer.writerow(row)
+
     return {"sparsity": sparsity, **cls_res, **attn_res}
 
 
 # %%
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="command line arguments for evaluate")
+    parser.add_argument(
+        "--sparsity",
+        type=float,
+        default=PRUNING_SPARSITY,
+        help="we need to remember to put in the exact same value as the one we use for train.py",
+    )
+    args = parser.parse_args()
+
     test_dataset = load_dataset("dair-ai/emotion", split="test")
     tokenizer = AutoTokenizer.from_pretrained(TEACHER_MODEL_NAME)
     teacher = AutoModelForSequenceClassification.from_pretrained(TEACHER_MODEL_NAME, dtype=torch.float32)
@@ -179,7 +211,7 @@ if __name__ == "__main__":
 
     for name, func in {**pruning_functions, "Without KD": None}.items():
         if func:
-            pruned_teacher = func(teacher, PRUNING_SPARSITY)
+            pruned_teacher = func(teacher, args.sparsity)
             evaluate_model(pruned_teacher, tokenizer, test_dataset, f"Pruned Teacher ({name})")
 
         student_path = os.path.join(OUTPUT_DIR, name, "final")
