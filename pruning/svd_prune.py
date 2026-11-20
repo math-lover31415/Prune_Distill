@@ -8,7 +8,7 @@ from torch.return_types import mode
 def get_target_layers(model):
     # transformer encoder layers
     return [
-        (module, "weight")
+        (name, module)
         for name, module in model.named_modules()
         if isinstance(module, nn.Linear) and ".layer." in name
     ]
@@ -28,6 +28,8 @@ def svd_prune_bert(model, sparsity):
 
     if not 0.0 <= sparsity <= 1.0:
         raise ValueError("Must be a real number in [0,1]")
+
+    print(f"Pruning model with SVD at {sparsity*100:.2f}% sparsity")
     
     #not doing in place here, so changed it
     thinned_model = copy.deepcopy(model)
