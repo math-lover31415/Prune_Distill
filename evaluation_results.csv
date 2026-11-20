@@ -1,3 +1,4 @@
+Model,Sparsity (%),Overall Accuracy (%),Macro F1,Weighted F1,Macro Precision,Macro Recall,Attn_attention_gradient_correlation,Attn_divergence_score,Attn_faithfulness_comprehensiveness,Attn_faithfulness_sufficiency,Attn_attention_sharpness_entropy
 Unpruned Teacher,0.0,92.65,0.8821,0.9262,0.886,0.8792,0.2159,0.1171,0.3406,0.1605,0.9492
 Pruned Teacher (identity),0.0,92.65,0.8821,0.9262,0.886,0.8792,0.2159,0.1171,0.3406,0.1605,0.9492
 Distilled Student (identity),0.0,77.1,0.5309,0.7228,0.6707,0.5529,0.3739,0.082,0.0967,0.0839,0.8585
