@@ -110,14 +110,3 @@ def svd_prune_bert(model, sparsity):
             )
 
     return thinned_model
-
-
-def sparsity_report(model):
-    per_layer, zeros, total = {}, 0, 0
-    for name, m in model.named_modules():
-        if isinstance(m, nn.Linear) and ".layer." in name:
-            z = int((m.weight == 0).sum().item())
-            per_layer[name] = z / m.weight.numel()
-            zeros += z
-            total += m.weight.numel()
-    return {"overall": zeros / total if total else 0.0, "per_layer": per_layer}
