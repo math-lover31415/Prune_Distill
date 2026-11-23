@@ -138,10 +138,8 @@ def evaluate_attention(model, tokenizer, dataset, num_samples=200):
 
 # %%
 def evaluate_model(model, tokenizer, dataset, name, sparsity_override=None):
-    # SVD pruning replaces each weight matrix with low-rank factors, so its
-    # sparsity cannot be recovered by counting zero-valued weights. Use the
-    # requested pruning level for SVD models; magnitude pruning is measured
-    # from the resulting zero weights.
+    # SVD sparsity cannot be recovered by counting zero-valued weights, and
+    # distilled students should report their teacher's pruning level.
     sparsity = (
         sparsity_override
         if sparsity_override is not None
@@ -237,5 +235,5 @@ if __name__ == "__main__":
                 student_tokenizer,
                 test_dataset,
                 f"Distilled Student ({name})",
-                sparsity_override=args.sparsity if name == "svd" else None,
+                sparsity_override=args.sparsity if func and name != "identity" else None,
             )
