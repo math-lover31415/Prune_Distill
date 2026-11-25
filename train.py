@@ -5,7 +5,7 @@ from pruning import pruning_functions
 from constants import *
 from torch.nn import functional as F
 from datasets import load_dataset
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments, set_seed
 import argparse
 
 def get_training_args(**overrides) -> TrainingArguments:
@@ -51,6 +51,7 @@ class CustomTrainer(Trainer):
         return (loss, outputs) if return_outputs else loss
 
 def train_model(strategy=None, teacher=None):
+    set_seed(TRAINING_ARGUMENTS["seed"])
     tokenizer = AutoTokenizer.from_pretrained(STUDENT_MODEL_NAME)
     
     train_dataset = load_dataset("dair-ai/emotion", split="train")

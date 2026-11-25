@@ -9,6 +9,8 @@ TRAINING_ARGUMENTS = {
     "fp16": True,
     "dataloader_num_workers": 2,
     "dataloader_pin_memory": True,
+    "seed": 42,
+    "data_seed": 42,
 }
 
 OUTPUT_DIR = "./results"
