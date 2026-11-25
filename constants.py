@@ -14,8 +14,8 @@ TRAINING_ARGUMENTS = {
 OUTPUT_DIR = "./results"
 PRUNING_SPARSITY = 0.5
 
-KD_FACTOR = 0.1
-TEACHER_TEMPERATURE = 1
+KD_FACTOR = 0.7
+TEACHER_TEMPERATURE = 5
 
 STUDENT_MODEL_NAME = "google/bert_uncased_L-4_H-256_A-4"
 TEACHER_MODEL_NAME = "bhadresh-savani/bert-base-uncased-emotion"
