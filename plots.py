@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 METRICS = (
-    ("Accuracy", 2, 100.0),
+    ("Accuracy", 2, 100.0), #column what to divide by
     ("Macro F1", 3, 1.0),
     ("Weighted F1", 4, 1.0),
     ("Macro Precision", 5, 1.0),
@@ -43,7 +43,7 @@ def load_results(csv_path):
     return results
 
 
-def average_at_severities(results, labels):
+def average_at_severities(results, labels): #because some run twice so some have 2 
     grouped = defaultdict(list)
     for label in labels:
         for severity, rows in results.get(label, {}).items():
@@ -90,6 +90,13 @@ def plot_method(results, method, display_name, output_dir):
         ax.set_ylabel("Score")
         ax.grid(True, alpha=0.3)
         ax.legend()
+
+    max_severity = max(max(student_values), max(teacher_values))
+    x_ticks = list(range(0, int(max_severity) + 1, 10))
+    if max_severity not in x_ticks:
+        x_ticks.append(max_severity)
+    axes[0].set_xticks(x_ticks)
+    axes[0].set_xlim(0, max_severity + max(1, max_severity * 0.02))
 
     axes[-1].set_visible(False)
     fig.suptitle(f"{display_name} Pruning: Student and Teacher Metrics")
