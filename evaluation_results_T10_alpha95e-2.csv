@@ -1,3 +1,4 @@
+Model,Sparsity,Accuracy,F1Macro,Precision,Recall,Specificity,FPR,FNR,FDR,F1Score,AUC
 Unpruned Teacher,0.0,92.65,0.8821,0.9262,0.886,0.8792,0.2159,0.1171,0.3406,0.1605,0.9492
 Pruned Teacher (identity),0.0,92.65,0.8821,0.9262,0.886,0.8792,0.2159,0.1171,0.3406,0.1605,0.9492
 Distilled Student (identity),0.0,58.2,0.2467,0.467,0.3117,0.3072,0.3782,0.0646,0.0271,0.08,0.8937
