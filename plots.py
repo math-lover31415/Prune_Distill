@@ -20,10 +20,12 @@ METHODS = {
 }
 
 
-def load_results(csv_path):
+def load_results(csv_path, start_line=1):
     results = defaultdict(lambda: defaultdict(list))
     with csv_path.open(newline="", encoding="utf-8-sig") as csv_file:
         for line_number, row in enumerate(csv.reader(csv_file), start=1):
+            if line_number < start_line:
+                continue
             if not row:
                 continue
             if len(row) < 7:
@@ -57,7 +59,7 @@ def average_at_severities(results, labels): #because some run twice so some have
     }
 
 
-def plot_method(results, method, display_name, output_dir):
+def plot_method(results, method, display_name, output_dir, tag=None):
     student_values = average_at_severities(
         results,
         ("Distilled Student (identity)", f"Distilled Student ({method})"),
@@ -99,10 +101,14 @@ def plot_method(results, method, display_name, output_dir):
     axes[0].set_xlim(0, max_severity + max(1, max_severity * 0.02))
 
     axes[-1].set_visible(False)
-    fig.suptitle(f"{display_name} Pruning: Student and Teacher Metrics")
+    title = f"{display_name} Pruning: Student and Teacher Metrics"
+    if tag:
+        title += f" ({tag.replace('_', ' ').title()})"
+    fig.suptitle(title)
     fig.tight_layout()
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"{method}_metrics.png"
+    filename_tag = f"_{tag.lower().replace(' ', '_')}" if tag else ""
+    output_path = output_dir / f"{method}_metrics{filename_tag}.png"
     fig.savefig(output_path, dpi=160, bbox_inches="tight")
     plt.close(fig)
     return output_path
@@ -125,11 +131,25 @@ def main():
         default=script_dir / "plots",
         help="Directory for generated plot images (default: plots beside this script)",
     )
+    parser.add_argument(
+        "--start-line",
+        type=int,
+        default=1,
+        help="1-based CSV line to start reading from (default: 1)",
+    )
+    parser.add_argument(
+        "--tag",
+        help="Optional title and filename tag to keep new plots separate",
+    )
     args = parser.parse_args()
 
-    results = load_results(args.input)
+    if args.start_line < 1:
+        parser.error("--start-line must be at least 1")
+    results = load_results(args.input, args.start_line)
     for method, display_name in METHODS.items():
-        output_path = plot_method(results, method, display_name, args.output_dir)
+        output_path = plot_method(
+            results, method, display_name, args.output_dir, args.tag
+        )
         print(f"Saved {output_path}")
 
 
