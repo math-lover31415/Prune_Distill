@@ -20,12 +20,14 @@ METHODS = {
 }
 
 
-def load_results(csv_path, start_line=1):
+def load_results(csv_path, start_line=1, end_line=None):
     results = defaultdict(lambda: defaultdict(list))
     with csv_path.open(newline="", encoding="utf-8-sig") as csv_file:
         for line_number, row in enumerate(csv.reader(csv_file), start=1):
             if line_number < start_line:
                 continue
+            if end_line is not None and line_number > end_line:
+                break
             if not row:
                 continue
             if len(row) < 7:
@@ -71,8 +73,8 @@ def plot_method(results, method, display_name, output_dir, tag=None):
     if not student_values or not teacher_values:
         raise ValueError(f"Missing student or teacher results for {method}")
 
-    fig, axes = plt.subplots(2, 3, figsize=(15, 8), sharex=True)
-    axes = axes.flat
+    fig, axes = plt.subplots(2, 3, figsize=(15, 9), sharex=False)
+    axes = list(axes.flat)
     for metric_index, (metric_name, _, _) in enumerate(METRICS):
         ax = axes[metric_index]
         for series, label, color, marker in (
@@ -97,8 +99,9 @@ def plot_method(results, method, display_name, output_dir, tag=None):
     x_ticks = list(range(0, int(max_severity) + 1, 10))
     if max_severity not in x_ticks:
         x_ticks.append(max_severity)
-    axes[0].set_xticks(x_ticks)
-    axes[0].set_xlim(0, max_severity + max(1, max_severity * 0.02))
+    for ax in axes[: len(METRICS)]:
+        ax.set_xticks(x_ticks)
+        ax.set_xlim(0, max_severity + max(1, max_severity * 0.02))
 
     axes[-1].set_visible(False)
     title = f"{display_name} Pruning: Student and Teacher Metrics"
@@ -138,6 +141,11 @@ def main():
         help="1-based CSV line to start reading from (default: 1)",
     )
     parser.add_argument(
+        "--end-line",
+        type=int,
+        help="1-based CSV line to stop reading at, inclusive",
+    )
+    parser.add_argument(
         "--tag",
         help="Optional title and filename tag to keep new plots separate",
     )
@@ -145,7 +153,9 @@ def main():
 
     if args.start_line < 1:
         parser.error("--start-line must be at least 1")
-    results = load_results(args.input, args.start_line)
+    if args.end_line is not None and args.end_line < args.start_line:
+        parser.error("--end-line must be greater than or equal to --start-line")
+    results = load_results(args.input, args.start_line, args.end_line)
     for method, display_name in METHODS.items():
         output_path = plot_method(
             results, method, display_name, args.output_dir, args.tag
