@@ -15,6 +15,7 @@ METHODS = {
     "global_mag": "Global Magnitude",
 }
 METRICS = (("Accuracy", "Accuracy"), ("F1Macro", "Macro F1"))
+STUDENT_WITHOUT_KD = {"Accuracy": 77, "Macro F1": 0.54}
 FILENAME_PATTERN = re.compile(r"evaluation_results_T(?P<T>[^_]+)_alpha(?P<alpha>[^.]+)\.csv$")
 
 
@@ -138,6 +139,11 @@ def plot_multiple(csv_files=None, output_dir=None):
                 unpruned["Unpruned student"][metric_name], color="gray",
                 linestyle=":", linewidth=1.8, alpha=0.4,
                 label="Unpruned student (mean)",
+            )
+            ax.axhline(
+                STUDENT_WITHOUT_KD[metric_name], color="gray",
+                linestyle="-.", linewidth=1.8, alpha=0.65,
+                label="Student without KD",
             )
             for label, run_data in runs:
                 student_map = run_data.get((method, label), {})
